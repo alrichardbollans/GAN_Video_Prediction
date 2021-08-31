@@ -1,16 +1,17 @@
 import tensorflow as tf
-from keras.backend.tensorflow_backend import set_session
+# from keras.backend.tensorflow_backend import set_session
 from keras.models import load_model
 from moviepy.editor import CompositeVideoClip, ImageSequenceClip
 from data_utils import get_data_gen, get_train_test_files, denormalize, VIDEO_KNOT, VIDEO_NEEDLE_PASSING, VIDEO_SUTURING
 import matplotlib.pyplot as plt
+from skimage.metrics import peak_signal_noise_ratio, structural_similarity
 
-config = tf.ConfigProto()
-config.gpu_options.allow_growth = True  # dynamically grow the memory used on the GPU
-config.log_device_placement = False  # to log device placement (on which device the operation ran)
-                                    # (nothing gets printed in Jupyter, only if you run it standalone)
-sess = tf.Session(config=config)
-set_session(sess)  # set this TensorFlow session as the default session for Keras
+# config = tf.ConfigProto()
+# config.gpu_options.allow_growth = True  # dynamically grow the memory used on the GPU
+# config.log_device_placement = False  # to log device placement (on which device the operation ran)
+#                                     # (nothing gets printed in Jupyter, only if you run it standalone)
+# sess = tf.Session(config=config)
+# set_session(sess)  # set this TensorFlow session as the default session for Keras
 
 
 
@@ -55,7 +56,7 @@ def plot_different_models(timesteps = [5, 10]):
     must be present
     param timesteps A list of numbers indicating the timesteps that were used for training different models
     """
-    from skimage.measure import compare_psnr, compare_ssim
+
     psnrs = {}
     ssims = {}
     for ts in timesteps:
@@ -73,8 +74,8 @@ def plot_different_models(timesteps = [5, 10]):
 
             predictions = model.predict_on_batch(x)
             y_pred.extend(predictions)
-        psnrs[ts] = [compare_psnr(denormalize(yt), denormalize(p)) for yt, p in zip((y_true), (y_pred))]
-        ssims[ts] = [compare_ssim(denormalize(yt), denormalize(p), multichannel=True) for yt, p in zip((y_true), (y_pred))]
+        psnrs[ts] = [peak_signal_noise_ratio(denormalize(yt), denormalize(p)) for yt, p in zip((y_true), (y_pred))]
+        ssims[ts] = [structural_similarity(denormalize(yt), denormalize(p), multichannel=True) for yt, p in zip((y_true), (y_pred))]
 
     plt.boxplot([psnrs[ts] for ts in timesteps], labels=timesteps)
     plt.savefig("jigsaws_psnrs_all.png")

@@ -8,18 +8,17 @@ VIDEO_KNOT = "Knot_Tying"
 VIDEO_NEEDLE_PASSING = "Needle_Passing"
 VIDEO_SUTURING = "Suturing"
 data_dir = "../prednet-surgery/data"
+VIDEO_DIR = "videos"
 
 
 def get_train_test_files(split_ratio=0.8, shuffle=True, which=None):
-    if which is None:
-        video_dirs = [VIDEO_KNOT, VIDEO_NEEDLE_PASSING, VIDEO_SUTURING]
-    else:
-        video_dirs = [which]
     files = []
-    for video_dir in video_dirs:
-        vid_dir_path = os.path.join(data_dir, video_dir, "video")
-        video_files = glob.glob(os.path.join(vid_dir_path, "*capture2.avi"))
-        files.extend(video_files)
+
+
+    video_files = glob.glob(os.path.join(VIDEO_DIR, "*.avi"))
+    files.extend(video_files)
+    video_files = glob.glob(os.path.join(VIDEO_DIR, "*.MOV"))
+    files.extend(video_files)
 
     # sort files
     files = sorted(files)

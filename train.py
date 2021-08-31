@@ -1,14 +1,14 @@
 from model import Pix2Pix
 from data_utils import get_train_test_files, get_data_gen
 import tensorflow as tf
-from keras.backend.tensorflow_backend import set_session
 
-config = tf.ConfigProto()
-config.gpu_options.allow_growth = True  # dynamically grow the memory used on the GPU
-config.log_device_placement = False  # to log device placement (on which device the operation ran)
-                                    # (nothing gets printed in Jupyter, only if you run it standalone)
-sess = tf.Session(config=config)
-set_session(sess)  # set this TensorFlow session as the default session for Keras
+
+# config = tf.ConfigProto()
+# config.gpu_options.allow_growth = True  # dynamically grow the memory used on the GPU
+# config.log_device_placement = False  # to log device placement (on which device the operation ran)
+#                                     # (nothing gets printed in Jupyter, only if you run it standalone)
+# sess = tf.Session(config=config)
+# set_session(sess)  # set this TensorFlow session as the default session for Keras
 
 # params
 
@@ -29,4 +29,4 @@ gan.discriminator.summary()
 print()
 print("Combined Summary")
 gan.combined.summary()
-gan.train(train_gen, epochs=600, batch_size=batch_size, save_interval=200, save_file_name="r_p2p_gen_t2.model")
+gan.train(train_gen, epochs=1, batch_size=batch_size, save_interval=200, save_file_name="r_p2p_gen_t2.model")

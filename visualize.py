@@ -2,18 +2,20 @@ from data_utils import get_data_gen, get_train_test_files, denormalize, VIDEO_KN
 import matplotlib.pyplot as plt
 import numpy as np
 
+
 import tensorflow as tf
-from keras.backend.tensorflow_backend import set_session
-from keras.models import load_model
-config = tf.ConfigProto()
-config.gpu_options.allow_growth = True  # dynamically grow the memory used on the GPU
-config.log_device_placement = False  # to log device placement (on which device the operation ran)
-                                    # (nothing gets printed in Jupyter, only if you run it standalone)
-sess = tf.Session(config=config)
+from skimage.metrics import peak_signal_noise_ratio, structural_similarity
+
+from tensorflow.keras.models import load_model
+# config = tf.ConfigProto()
+# config.gpu_options.allow_growth = True  # dynamically grow the memory used on the GPU
+# config.log_device_placement = False  # to log device placement (on which device the operation ran)
+#                                     # (nothing gets printed in Jupyter, only if you run it standalone)
+# sess = tf.Session(config=config)
 # set_session(sess)  # s
 
 print("Loading model...")
-model = load_model("./r_p2p_gen.model")
+model = load_model("./r_p2p_gen_t2.model")
 print("Loaded model")
 
 def plot_results(y_true, y_pred, filename, cols=5):
@@ -42,9 +44,9 @@ def plot_results(y_true, y_pred, filename, cols=5):
     fig.savefig(filename, bbox_inches='tight')
 
 def plot_metrics(y_true, y_pred):
-    from skimage.measure import compare_psnr, compare_ssim
-    psnrs = [compare_psnr(yt, p) for yt, p in zip(denormalize(y_true), denormalize(y_pred))]
-    ssims = [compare_ssim(yt, p, multichannel=True) for yt, p in zip(denormalize(y_true), denormalize(y_pred))]
+
+    psnrs = [peak_signal_noise_ratio(yt, p) for yt, p in zip(denormalize(y_true), denormalize(y_pred))]
+    ssims = [structural_similarity(yt, p, multichannel=True) for yt, p in zip(denormalize(y_true), denormalize(y_pred))]
     plt.figure(figsize=(5, 4))
     plt.boxplot(psnrs, 0, 'gD')
     plt.savefig("./jigsaws_psnrs_boxplot.png")

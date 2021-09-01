@@ -1,10 +1,12 @@
 import tensorflow as tf
 # from keras.backend.tensorflow_backend import set_session
-from keras.models import load_model
+from tensorflow.keras.models import load_model
 from moviepy.editor import CompositeVideoClip, ImageSequenceClip
-from data_utils import get_data_gen, get_train_test_files, denormalize, VIDEO_KNOT, VIDEO_NEEDLE_PASSING, VIDEO_SUTURING
+from data_utils import get_data_gen, get_train_test_files, denormalize, PREDICTED_VIDEOS_DIR, SAVED_MODEL_DIR, \
+    IMG_WIDTH, IMG_HEIGHT, TIMESTEPS
 import matplotlib.pyplot as plt
 from skimage.metrics import peak_signal_noise_ratio, structural_similarity
+
 
 # config = tf.ConfigProto()
 # config.gpu_options.allow_growth = True  # dynamically grow the memory used on the GPU
@@ -16,21 +18,15 @@ from skimage.metrics import peak_signal_noise_ratio, structural_similarity
 
 
 
-# params
 
-batch_size = 1
-timesteps = 5
-im_width = im_height = 256
-# end params
 
-def generate_video(saved_model_path, video_category=None):
+def generate_video(saved_model_path, video_file=None):
     """Uses the trained model to predict the frames and produce a video out of them"""
     # load model
     model = load_model(saved_model_path)
 
-    which_one = video_category
-    train_files, test_files = get_train_test_files(which=which_one)
-    test_gen = get_data_gen(files=test_files, timesteps=timesteps, batch_size=batch_size, im_size=(im_width, im_height))
+    train_files, test_files = get_train_test_files(video_file='videos/'+video_file)
+    test_gen = get_data_gen(files=test_files, timesteps=TIMESTEPS, batch_size=batch_size, im_size=(IMG_WIDTH, IMG_HEIGHT))
 
     y_true = []
     y_pred = []
@@ -47,14 +43,14 @@ def generate_video(saved_model_path, video_category=None):
     clip2 = ImageSequenceClip([denormalize(i)for i in y_pred], fps=5)
     clip2 = clip2.set_position((clip1.w, 0))
     video = CompositeVideoClip((clip1, clip2), size=(clip1.w * 2, clip1.h))
-    video.write_videofile("{}.mp4".format(which_one if which_one else "render"), fps=5)
+    video.write_videofile(PREDICTED_VIDEOS_DIR+"/{}.mp4".format(video_file if video_file else "render"), fps=5)
 
 
 def plot_different_models(timesteps = [5, 10]):
     """
     Compares ssim/psnr of different models. The models for each of the supplied timestap
     must be present
-    param timesteps A list of numbers indicating the timesteps that were used for training different models
+    param TIMESTEPS A list of numbers indicating the TIMESTEPS that were used for training different models
     """
 
     psnrs = {}
@@ -63,7 +59,7 @@ def plot_different_models(timesteps = [5, 10]):
         model_name = "r_p2p_gen_t{}.model".format(ts)
         model = load_model(model_name)
         train_files, test_files = get_train_test_files()
-        test_gen = get_data_gen(files=train_files, timesteps=ts, batch_size=batch_size, im_size=(im_width, im_height))
+        test_gen = get_data_gen(files=train_files, timesteps=ts, batch_size=batch_size, im_size=(IMG_WIDTH, IMG_HEIGHT))
 
         y_true = []
         y_pred = []
@@ -83,5 +79,11 @@ def plot_different_models(timesteps = [5, 10]):
     plt.figure()
     plt.boxplot([ssims[ts] for ts in timesteps], labels=timesteps)
     plt.savefig("jigsaws_ssims_all.png")
+if __name__ == "__main__":
+    # params
 
-plot_different_models(timesteps=[5, 10])
+    batch_size = 1
+
+    # end params
+    # plot_different_models(timesteps=[5, 10])
+    generate_video(SAVED_MODEL_DIR+"/water_flow_v0.model", video_file='IMG_1557.MOV')

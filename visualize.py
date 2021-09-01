@@ -1,4 +1,4 @@
-from data_utils import get_data_gen, get_train_test_files, denormalize, VIDEO_KNOT, VIDEO_NEEDLE_PASSING, VIDEO_SUTURING
+from data_utils import get_data_gen, get_train_test_files, denormalize, TIMESTEPS, IMG_WIDTH, IMG_HEIGHT
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -15,8 +15,9 @@ from tensorflow.keras.models import load_model
 # set_session(sess)  # s
 
 print("Loading model...")
-model = load_model("./r_p2p_gen_t2.model")
+model = load_model("saved_models/r_p2p_gen_t2.model")
 print("Loaded model")
+print(model.summary())
 
 def plot_results(y_true, y_pred, filename, cols=5):
     rows = max(1, len(y_true) // cols * 2)
@@ -134,18 +135,21 @@ def plot_saliency(model, y_true):
 
 def visualize_for(which, filename, should_plot_results=True, should_plot_metrics=False, should_plot_saliency=False):
     train_files, test_files = get_train_test_files(shuffle=True, which=which)
-    test_gen = get_data_gen(files=test_files, timesteps=timesteps, 
-                        batch_size=batch_size, 
-                        im_size=(im_width, im_height),
-                        fps=5                    
-                        )
+    test_gen = get_data_gen(files=test_files, timesteps=TIMESTEPS,
+                            batch_size=batch_size,
+                            im_size=(IMG_WIDTH, IMG_HEIGHT),
+                            fps=5
+                            )
     if which is not None:
         next(test_gen)
     
     x, y_true = next(test_gen)
     # for small
     # x, y_true = x[-5:], y_true[-5:]
-    y_pred = model.predict(x, batch_size=5)
+    print(test_gen)
+    print(x.shape)
+    y_pred = model.predict(x, batch_size=2)
+
 
     if should_plot_results:
         plot_results(y_true, y_pred, filename=filename, cols=10)
@@ -157,14 +161,12 @@ def visualize_for(which, filename, should_plot_results=True, should_plot_metrics
         p = np.random.permutation(len(x))
         plot_saliency(model, x[p][:4])
 
+if __name__ == "__main__":
+    batch_size = 2
 
-batch_size = 20
-timesteps = 5
-im_width = im_height = 256
+    # visualize_for(VIDEO_KNOT, "knot_predictions.png")
+    # visualize_for(VIDEO_NEEDLE_PASSING, "needle_predictions.png")
+    # visualize_for(VIDEO_SUTURING, "suturing_predictions.png")
 
-# visualize_for(VIDEO_KNOT, "knot_predictions.png")
-# visualize_for(VIDEO_NEEDLE_PASSING, "needle_predictions.png")
-# visualize_for(VIDEO_SUTURING, "suturing_predictions.png")
 
-batch_size = 600
-visualize_for(None, "", should_plot_results=False, should_plot_metrics=True, should_plot_saliency=False)
+    visualize_for(None, "", should_plot_results=False, should_plot_metrics=True, should_plot_saliency=False)

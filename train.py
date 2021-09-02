@@ -1,6 +1,6 @@
 from model import Pix2Pix
 from data_utils import get_train_test_files, get_data_gen, SAVED_MODEL_DIR, TIMESTEPS, IMG_WIDTH, IMG_HEIGHT
-
+# TODO: improve resolution/ work out how to smooth video
 
 # config = tf.ConfigProto()
 # config.gpu_options.allow_growth = True  # dynamically grow the memory used on the GPU
@@ -32,7 +32,8 @@ if __name__ == "__main__":
     gan.combined.summary()
 
 
-
+    # TODO: add callback
+    # TODO: add save interval
     gan.train(train_gen, epochs=1000, batch_size=batch_size, save_interval=200,
               save_file_name=SAVED_MODEL_DIR+"/water_flow_v0.model")
 

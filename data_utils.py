@@ -9,18 +9,17 @@ VIDEO_DIR = "videos"
 SAVED_MODEL_DIR = "saved_models"
 PREDICTED_VIDEOS_DIR = "predicted videos"
 TIMESTEPS = 5
+FPS = 15
 IMG_WIDTH = IMG_HEIGHT = 256
+IMG_SIZE = (IMG_WIDTH,IMG_HEIGHT)
 
 
-def get_train_test_files(split_ratio=0.8, shuffle=True, video_file=None):
-    if video_file is not None:
-        files = [video_file]
-    else:
-        files = []
-        video_files = glob.glob(os.path.join(VIDEO_DIR, "*.avi"))
-        files.extend(video_files)
-        video_files = glob.glob(os.path.join(VIDEO_DIR, "*.MOV"))
-        files.extend(video_files)
+def get_train_test_files(split_ratio=0.8, shuffle=True):
+    files = []
+    video_files = glob.glob(os.path.join(VIDEO_DIR, "*.avi"))
+    files.extend(video_files)
+    video_files = glob.glob(os.path.join(VIDEO_DIR, "*.MOV"))
+    files.extend(video_files)
 
     # sort files
     files = sorted(files)
@@ -47,15 +46,17 @@ def _get_xy_pair(frames, timesteps, frame_mode, im_size):
     def resize_image(np_image):
         return np.array(Image.fromarray(np_image, mode="RGB").resize(im_size))
 
+    pairs = []
     for i in rng:
         x = frames[i - timesteps: i]
         x = list(map(resize_image, x))
         y = resize_image(frames[i + 1])
 
-        yield x, y
+        pairs.append((x, y))
+    return pairs
 
 
-def get_data_gen(files, timesteps=5, fps=15, batch_size=32, frame_mode="unique", for_training=True, im_size=(198, 198)):
+def get_data_gen(files, timesteps=5, fps=15, batch_size=32, frame_mode="unique", for_training=True, im_size=IMG_SIZE):
     x_batch = []
     y_batch = []
     while True:
@@ -63,7 +64,9 @@ def get_data_gen(files, timesteps=5, fps=15, batch_size=32, frame_mode="unique",
             clip = VideoFileClip(file, audio=False)
             frames = list(clip.iter_frames(fps=fps))
             clip.close()
-            for x, y in _get_xy_pair(frames, timesteps=timesteps, frame_mode=frame_mode, im_size=im_size):
+            for pair in _get_xy_pair(frames, timesteps=timesteps, frame_mode=frame_mode, im_size=im_size):
+                x = pair[0]
+                y = pair[1]
                 x_batch.append(x)
                 y_batch.append(y)
                 if len(x_batch) >= batch_size:
